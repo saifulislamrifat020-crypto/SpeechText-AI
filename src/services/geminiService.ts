@@ -42,11 +42,27 @@ export async function transcribeAudio(base64Data: string, mimeType: string): Pro
       },
     });
 
-    const jsonStr = response.text?.trim() || "{}";
+    let jsonStr = response.text?.trim() || "{}";
+    // Remove markdown code blocks if present
+    if (jsonStr.startsWith("```json")) {
+      jsonStr = jsonStr.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+    } else if (jsonStr.startsWith("```")) {
+      jsonStr = jsonStr.replace(/^```\n?/, "").replace(/\n?```$/, "");
+    }
     return JSON.parse(jsonStr);
-  } catch (e) {
+  } catch (e: any) {
     console.error("Failed to transcribe audio", e);
-    throw new Error("Failed to transcribe audio. Please try again.");
+    
+    // Provide a more helpful error message based on common issues
+    if (e.message?.includes("API key not valid")) {
+      throw new Error("আপনার API Key টি সঠিক নয়। দয়া করে সঠিক API Key ব্যবহার করুন।");
+    } else if (e.message?.includes("quota")) {
+      throw new Error("আপনার API কোটা শেষ হয়ে গেছে।");
+    } else if (e.message?.includes("JSON")) {
+      throw new Error("AI থেকে সঠিক ফরম্যাটে উত্তর পাওয়া যায়নি। আবার চেষ্টা করুন।");
+    }
+    
+    throw new Error(e.message || "অডিও ট্রান্সক্রাইব করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
   }
 }
 
@@ -70,11 +86,16 @@ export async function transcribeUrl(url: string): Promise<{ text: string, langua
       },
     });
 
-    const jsonStr = response.text?.trim() || "{}";
+    let jsonStr = response.text?.trim() || "{}";
+    if (jsonStr.startsWith("```json")) {
+      jsonStr = jsonStr.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+    } else if (jsonStr.startsWith("```")) {
+      jsonStr = jsonStr.replace(/^```\n?/, "").replace(/\n?```$/, "");
+    }
     return JSON.parse(jsonStr);
-  } catch (e) {
+  } catch (e: any) {
     console.error("Failed to transcribe URL", e);
-    throw new Error("Failed to transcribe URL. Make sure the link is accessible.");
+    throw new Error(e.message || "লিংক থেকে ট্রান্সক্রাইব করতে সমস্যা হয়েছে। লিংকটি সঠিক কিনা চেক করুন।");
   }
 }
 
@@ -86,9 +107,9 @@ export async function translateToBengali(text: string): Promise<string> {
       contents: `Translate the following text into Bengali accurately. Only return the translated Bengali text, nothing else:\n\n${text}`,
     });
     return response.text?.trim() || "";
-  } catch (e) {
+  } catch (e: any) {
     console.error("Failed to translate text", e);
-    throw new Error("Failed to translate text to Bengali.");
+    throw new Error(e.message || "বাংলায় অনুবাদ করতে সমস্যা হয়েছে।");
   }
 }
 
@@ -100,9 +121,9 @@ export async function getBengaliPronunciation(text: string): Promise<string> {
       contents: `Provide the Bengali pronunciation (transliteration in Bengali script) for the following text. Do not translate the meaning, just write how it sounds using Bengali letters. Only return the Bengali pronunciation text, nothing else:\n\n${text}`,
     });
     return response.text?.trim() || "";
-  } catch (e) {
+  } catch (e: any) {
     console.error("Failed to get Bengali pronunciation", e);
-    throw new Error("Failed to get Bengali pronunciation.");
+    throw new Error(e.message || "উচ্চারণ বের করতে সমস্যা হয়েছে।");
   }
 }
 
@@ -114,9 +135,9 @@ export async function fixTextErrors(text: string): Promise<string> {
       contents: `Review the following text and fix any spelling, grammar, or punctuation errors. Keep the original language and meaning intact. Only return the corrected text, nothing else:\n\n${text}`,
     });
     return response.text?.trim() || text;
-  } catch (e) {
+  } catch (e: any) {
     console.error("Failed to fix text", e);
-    throw new Error("Failed to correct text.");
+    throw new Error(e.message || "লেখা সংশোধন করতে সমস্যা হয়েছে।");
   }
 }
 
@@ -135,9 +156,14 @@ export async function extractKeywords(text: string): Promise<string[]> {
       },
     });
 
-    const jsonStr = response.text?.trim() || "[]";
+    let jsonStr = response.text?.trim() || "[]";
+    if (jsonStr.startsWith("```json")) {
+      jsonStr = jsonStr.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+    } else if (jsonStr.startsWith("```")) {
+      jsonStr = jsonStr.replace(/^```\n?/, "").replace(/\n?```$/, "");
+    }
     return JSON.parse(jsonStr);
-  } catch (e) {
+  } catch (e: any) {
     console.error("Failed to extract keywords", e);
     return [];
   }
