@@ -1,0 +1,7 @@
+{
+  "name": "SpeechText AI",
+  "description": "A fast, clean, and professional speech-to-text tool focused on transcription.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
