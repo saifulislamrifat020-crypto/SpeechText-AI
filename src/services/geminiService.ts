@@ -1,9 +1,21 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiClient: GoogleGenAI | null = null;
+
+function getAiClient(): GoogleGenAI {
+  if (!aiClient) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY environment variable is missing. Please set it in your Vercel project settings.");
+    }
+    aiClient = new GoogleGenAI({ apiKey });
+  }
+  return aiClient;
+}
 
 export async function transcribeAudio(base64Data: string, mimeType: string): Promise<{ text: string, language: string }> {
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [
@@ -40,6 +52,7 @@ export async function transcribeAudio(base64Data: string, mimeType: string): Pro
 
 export async function transcribeUrl(url: string): Promise<{ text: string, language: string }> {
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Transcribe or extract the main spoken/written content from this URL in its ORIGINAL language (e.g., if it is in Bengali, write in Bengali script). Do NOT translate it. Fix any grammatical errors, correct spelling mistakes, and ensure the text flows naturally. Add proper punctuation and detect the language. Return the result as a JSON object with 'text' and 'language' fields.\n\nURL: ${url}`,
@@ -67,6 +80,7 @@ export async function transcribeUrl(url: string): Promise<{ text: string, langua
 
 export async function translateToBengali(text: string): Promise<string> {
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Translate the following text into Bengali accurately. Only return the translated Bengali text, nothing else:\n\n${text}`,
@@ -80,6 +94,7 @@ export async function translateToBengali(text: string): Promise<string> {
 
 export async function getBengaliPronunciation(text: string): Promise<string> {
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Provide the Bengali pronunciation (transliteration in Bengali script) for the following text. Do not translate the meaning, just write how it sounds using Bengali letters. Only return the Bengali pronunciation text, nothing else:\n\n${text}`,
@@ -93,6 +108,7 @@ export async function getBengaliPronunciation(text: string): Promise<string> {
 
 export async function fixTextErrors(text: string): Promise<string> {
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Review the following text and fix any spelling, grammar, or punctuation errors. Keep the original language and meaning intact. Only return the corrected text, nothing else:\n\n${text}`,
@@ -106,6 +122,7 @@ export async function fixTextErrors(text: string): Promise<string> {
 
 export async function extractKeywords(text: string): Promise<string[]> {
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Extract the most important keywords from the following text. Return a JSON array of strings. Text:\n\n${text}`,
